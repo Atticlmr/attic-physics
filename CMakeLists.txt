@@ -1,71 +1,60 @@
 cmake_minimum_required(VERSION 3.20)
-project(flux_physics VERSION 0.1.0 LANGUAGES CXX)
+project(attic_physics VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 包含目录
+# 包含目录 - 头文件在include，对应include/attic
 include_directories(${CMAKE_SOURCE_DIR}/include)
+# 实现文件在src
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # ===== 数学库（最基础）=====
-add_library(flux_math STATIC
+add_library(attic_math STATIC
     src/math/vec3.cpp
     src/math/quat.cpp
     src/math/mat3.cpp
 )
 
 # ===== 刚体动力学核心 =====
-add_library(flux_rigid_body STATIC
-    src/rigid_body/rigid_body.cpp
+add_library(attic_rigid_body STATIC
+    src/rigid_body/body.cpp
     src/rigid_body/shape.cpp
-    src/rigid_body/inertia.cpp
 )
-target_link_libraries(flux_rigid_body flux_math)
+target_link_libraries(attic_rigid_body attic_math)
 
 # ===== 碰撞检测 =====
-add_library(flux_collision STATIC
-    src/collision/aabb.cpp
+add_library(attic_collision STATIC
     src/collision/broad_phase.cpp
-    src/collision/narrow_phase.cpp
-    src/collision/contact.cpp
-    src/collision/algorithms/sphere_sphere.cpp
-    src/collision/algorithms/box_box.cpp
+    src/collision/sphere_vs_sphere.cpp
 )
-target_link_libraries(flux_collision flux_math flux_rigid_body)
+target_link_libraries(attic_collision attic_math attic_rigid_body)
 
-# ===== 约束求解 =====
-add_library(flux_constraint STATIC
-    src/constraint/constraint.cpp
-    src/constraint/contact_constraint.cpp
-    src/constraint/joint.cpp
-    src/constraint/solvers/sequential_impulse.cpp
+# ===== 物理世界/求解器 =====
+add_library(attic_solver STATIC
+    src/solver/world.cpp
+    src/solver/contact_solver.cpp
 )
-target_link_libraries(flux_constraint flux_math flux_rigid_body)
+target_link_libraries(attic_solver attic_math attic_rigid_body attic_collision)
 
-# ===== 物理世界 =====
-add_library(flux_physics STATIC
-    src/physics/world.cpp
-    src/physics/integrators/euler.cpp
+# ===== 主库 =====
+add_library(attic_physics STATIC
+    src/physics/physics.cpp
 )
-target_link_libraries(flux_physics flux_rigid_body flux_collision flux_constraint)
+target_link_libraries(attic_physics attic_solver)
 
 # ===== 测试 =====
 enable_testing()
-
-# 数学测试
-add_executable(test_vec3 tests/rigid_body/test_free_fall.cpp)
-target_link_libraries(test_vec3 flux_math)
-add_test(NAME vec3 COMMAND test_vec3)
-
-# 碰撞测试
-add_executable(test_collision tests/collision/test_sphere_collision.cpp)
-target_link_libraries(test_collision flux_collision)
-add_test(NAME collision COMMAND test_collision)
+add_executable(test_math src/tests/test_math.cpp)
+target_link_libraries(test_math attic_math)
+add_test(NAME math COMMAND test_math)
 
 # ===== 示例程序 =====
-add_executable(example_free_fall examples/rigid_body/01_free_fall.cpp)
-target_link_libraries(example_free_fall flux_physics)
+add_executable(demo_sphere src/demo/01_single_sphere.cpp)
+target_link_libraries(demo_sphere attic_physics)
 
-add_executable(example_stack examples/rigid_body/04_box_stack.cpp)
-target_link_libraries(example_stack flux_physics)
+add_executable(demo_stack src/demo/02_sphere_stack.cpp)
+target_link_libraries(demo_stack attic_physics)
+
+add_executable(demo_box src/demo/03_rotating_box.cpp)
+target_link_libraries(demo_box attic_physics)

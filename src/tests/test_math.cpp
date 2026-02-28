@@ -1,5 +1,5 @@
 #include <iostream>      // 加上这个！
-#include "math/vec3.h"
+#include "attic/math/vec3.h"
 
 using namespace atp;
 
