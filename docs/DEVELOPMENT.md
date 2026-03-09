@@ -63,15 +63,52 @@ attic-physics/
 
 ## 开发阶段
 
-### Phase 1: 基础框架 (v0.1) - Week 1-2
+### Phase 1: 基础框架 (v0.1) - Week 1-2 ✅ 完成
 
-| 任务 | 描述 | 状态 |
+| 任务 | 文件 | 状态 |
 |------|------|------|
-| 项目结构完善 | CMake构建系统、目录结构 | ✅ |
-| 基础数学库 | vec3, mat3, quat | ✅ |
-| 日志系统 | 单例Logger，支持多级别 | ✅ |
+| 项目结构完善 | CMakeLists.txt | ✅ |
+| 基础数学库 | include/attic/core/math/{vec3,mat3,quat}.h, lib/core/math/*.cpp | ✅ |
+| 日志系统 | include/attic/core/log/log.h | ✅ |
+| 代码格式 | .clang-format | ✅ |
+| CI/CD | .github/workflows/ci.yml | ✅ |
 
 **里程碑**: 基础库可编译，测试通过
+
+---
+
+## 当前开发进度 (2026-03-05)
+
+### ✅ 已完成
+
+| 模块 | 文件 | 说明 |
+|------|------|------|
+| **数学库** | `lib/core/math/{vec3,mat3,quat}.cpp` | Vec3, Mat3, Quat 完整实现 |
+| **数学头文件** | `include/attic/core/math/{vec3,mat3,quat,math}.h` | 完整数学类型定义 |
+| **日志系统** | `include/attic/core/log/log.h` | DEBUG/INFO/WARN/ERROR 级别 |
+| **构建系统** | `CMakeLists.txt` | 基础构建配置 |
+| **代码规范** | `.clang-format` | LLVM 风格 |
+| **CI/CD** | `.github/workflows/ci.yml` | 多平台构建 + 测试 |
+| **文档** | `docs/{log,integrators,MATH_LIBRARY,PARSER_DESIGN}.md` | 使用指南和设计文档 |
+
+### ⏳ 开发中 (Phase 2)
+
+| 模块 | 文件 | 状态 | 说明 |
+|------|------|------|------|
+| **物理积分器** | `include/attic/physics/integrator.h` | 空文件 | 待实现 |
+| **积分器实现** | `include/attic/physics/integrators/{euler,verlet,rk4,implicit,implicit_fast}.h` | 空文件 | 待实现 |
+| **机器人模型** | `include/attic/physics/robot/robot_model.h` | 空文件 | 待实现 |
+| **URDF解析器** | `include/attic/physics/parser/urdf_parser.h` | 空文件 | 待实现 |
+| **MJCF解析器** | `include/attic/physics/parser/mjcf_parser.h` | 空文件 | 待实现 |
+| **World/Body** | 缺失 | 未创建 | Phase 2 核心功能 |
+
+### 📋 待开发
+
+- 物理世界 (World) 和刚体 (Body) 类
+- 碰撞检测系统
+- 机器人动力学 (RNEA/CRBA/ABA)
+- Python 绑定 (pybind11)
+- GPU 运行时
 
 ---
 
@@ -99,6 +136,31 @@ lib/physics/
 - 重力场 - 恒定重力
 
 **里程碑**: 小球从高处下落并落地
+
+> ⚠️ **当前状态**: 积分器头文件已创建但为空，需要实现 `World`/`Body` 类
+
+---
+
+## 项目统计
+
+| 类型 | 数量 |
+|------|------|
+| 头文件 (.h) | 18 |
+| 实现文件 (.cpp) | 12 |
+| 测试文件 | 3 |
+| 示例文件 | 4 |
+| 文档 (.md) | 8 |
+| Agent 配置 | 4 |
+
+---
+
+## 分支策略
+
+| 分支 | 用途 | 状态 |
+|------|------|------|
+| `main` | 稳定版 | - |
+| `dev` | 开发主分支 | 当前 |
+| `bugfix/initial` | Bug 修复分支 | 远程已创建 |
 
 #### 2.2 碰撞检测（基础）
 
