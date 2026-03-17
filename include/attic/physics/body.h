@@ -1,12 +1,15 @@
 #pragma once
-#include "attic/core/math/mat3.h"
-#include "attic/core/math/quat.h"
-#include "attic/core/math/vec3.h"
+#include "attic/core/math/math.h"
 
 #include <string>
 
 namespace attic {
 namespace physics {
+
+// Import math types for convenience
+using Vec3 = attic::math::Vec3;
+using Mat3 = attic::math::Mat3;
+using Quat = attic::math::Quat;
 
 // Rigid body structure for physics simulation
 // GPU-compatible: no STL containers in header, no virtual functions

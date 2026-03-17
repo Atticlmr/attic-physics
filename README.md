@@ -1,216 +1,158 @@
-# OpenCode 智能体配置
+# Attic Physics
 
-本项目配置了三个plan/subagent模式的智能体：Sherlock（福尔摩斯）、Sisyphus（西西弗斯）和Code Reviewer（代码审查员）。
+> **太素者，质之始也** ——《列子·天瑞》
 
-## 智能体列表
+一个统一的物理仿真框架，整合物理引擎、GPU编译器和渲染引擎。
 
-### 🔍 Sherlock (福尔摩斯)
-**文件**: `.opencode/agents/sherlock.md`
-**模式**: `plan` (主智能体)
+## 项目整合
 
-**角色**: C++代码侦探
-- 像福尔摩斯一样敏锐地分析代码问题
-- 教授现代C++17/20/23最佳实践
-- 发现内存泄漏、UB、性能瓶颈
+本项目整合了三个原先独立的项目：
 
-**专长**:
-- 代码审查与Bug发现
-- 内存安全与RAII
-- 模板元编程
-- 并发编程
+| 原项目 | 整合位置 | 状态 |
+|--------|----------|------|
+| attic-physics | `include/attic/physics/` | 基础框架完成 |
+| taiee (太易) | `include/attic/compiler/` | 待开发 |
+| taishy (太始) | `include/attic/render/` | 待开发 |
 
-**工具权限**:
-- ✅ Context7文档查询 (C++标准库)
-- ❌ 不编辑文件
-- ❌ 不运行命令
+## 特性
 
----
+- **CPU物理引擎** - 刚体动力学、碰撞检测、约束求解
+- **GPU加速** - CUDA/Vulkan多后端支持
+- **DSL编译器** - 自定义.physics语言，AOT预编译
+- **Python绑定** - 简单易用的Python API
+- **可选渲染** - Vulkan-based可视化
 
-### ⛰️ Sisyphus (西西弗斯)
-**文件**: `.opencode/agents/sisyphus.md`
-**模式**: `plan` (主智能体)
+## 快速开始
 
-**角色**: LLVM/MLIR编译器工程师
-- 像西西弗斯一样不断追求编译器优化的极致
-- 设计编译器架构和Dialect
-- 生成和优化LLVM IR/MLIR
+### 基础构建（仅CPU物理引擎）
 
-**专长**:
-- LLVM IR设计与Pass开发
-- MLIR Dialect创建
-- JIT编译器实现
-- 代码生成优化
-
-**工具权限**:
-- ✅ Context7文档查询 (LLVM/MLIR)
-- ❌ 不编辑文件
-- ❌ 不运行命令
-
----
-
-### 🔎 Code Reviewer (代码审查员)
-**文件**: `.opencode/agents/code-reviewer.md`
-**模式**: `subagent` (子智能体)
-
-**角色**: 代码质量专家
-- 像资深工程师审查PR一样严格
-- 全面检查代码质量、安全性和最佳实践
-- 提供建设性的改进建议
-
-**专长**:
-- 内存安全与资源管理
-- 未定义行为检测
-- 线程安全分析
-- 性能优化建议
-- 代码风格和可维护性
-
-**工具权限**:
-- ✅ Context7文档查询
-- ❌ 不编辑文件
-- ❌ 不运行命令
-
-**使用方式**: 通常由其他智能体调用
-```
-@sherlock 完成这段代码后，请@code-reviewer审查一下。
+```bash
+git clone https://github.com/yourusername/attic-physics.git
+cd attic-physics
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+./test_core
 ```
 
-## 使用方法
+### 启用GPU支持
 
-### 1. 配置opencode.json
+```bash
+cmake -DATTIC_BUILD_GPU=ON ..
+```
 
-在项目根目录创建或编辑 `opencode.json`:
+### 启用DSL编译器
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "agent": {
-    "sherlock": {
-      "description": "C++代码侦探",
-      "mode": "plan",
-      "prompt": "{file:.opencode/agents/sherlock.md}",
-      "model": "anthropic/claude-sonnet-4-20250514",
-      "temperature": 0.2,
-      "tools": {
-        "write": false,
-        "edit": false,
-        "bash": false,
-        "context7_query-docs": true,
-        "context7_resolve-library-id": true
-      }
-    },
-    "sisyphus": {
-      "description": "LLVM/MLIR编译器工程师",
-      "mode": "plan",
-      "prompt": "{file:.opencode/agents/sisyphus.md}",
-      "model": "anthropic/claude-sonnet-4-20250514",
-      "temperature": 0.2,
-      "tools": {
-        "write": false,
-        "edit": false,
-        "bash": false,
-        "context7_query-docs": true,
-        "context7_resolve-library-id": true
-      }
-    },
-    "code-reviewer": {
-      "description": "代码审查专家",
-      "mode": "subagent",
-      "prompt": "{file:.opencode/agents/code-reviewer.md}",
-      "model": "anthropic/claude-sonnet-4-20250514",
-      "temperature": 0.1,
-      "tools": {
-        "write": false,
-        "edit": false,
-        "bash": false,
-        "context7_query-docs": true
-      }
+```bash
+cmake -DATTIC_BUILD_COMPILER=ON ..
+```
+
+## 项目结构
+
+```
+attic-physics/
+├── include/attic/        # 头文件
+│   ├── core/            # 数学库、日志
+│   ├── physics/         # 物理引擎
+│   ├── compiler/        # DSL编译器
+│   ├── gpu/             # GPU运行时
+│   └── render/          # 渲染引擎
+├── lib/                 # 实现文件
+├── kernels/             # GPU kernel定义
+├── python/              # Python绑定
+├── test/                # 测试
+├── examples/            # 示例
+└── tools/               # 工具
+```
+
+## 开发阶段
+
+1. **Phase 1** ✅ 基础框架 - 数学库、日志、构建系统
+2. **Phase 2** ⭐ 物理核心 - World、Body、积分器（当前）
+3. **Phase 3** Python绑定 - pybind11集成
+4. **Phase 4** GPU运行时 - SoA、内存管理
+5. **Phase 5** DSL编译器 - .physics → GPU
+6. **Phase 6** 渲染引擎 - Vulkan可视化
+7. **Phase 7** 高级物理 - 刚体动力学、机器人
+8. **Phase 8** 优化发布 - 性能优化、PyPI
+
+详见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+
+## 使用示例
+
+### C++
+
+```cpp
+#include <attic/physics/world.h>
+
+int main() {
+    attic::physics::World world;
+    
+    auto& ball = world.create_body();
+    ball.position = Vec3(0, 10, 0);
+    ball.mass = 1.0f;
+    
+    for (int i = 0; i < 1000; ++i) {
+        world.step(0.016f);
+        printf("t=%.2f, y=%.2f\n", i * 0.016f, ball.position.y);
     }
-  }
+    
+    return 0;
 }
 ```
 
-### 2. 激活智能体
+### Python
 
-在OpenCode中，按 `Tab` 键切换智能体，或使用命令：
+```python
+import attic_physics as ap
 
-```
-/agent sherlock
-/agent sisyphus
-```
+world = ap.World()
+ball = world.create_body(mass=1.0)
+ball.position = (0, 10, 0)
 
-### 3. 使用示例
-
-**与Sherlock对话**:
-```
-@sherlock 请帮我分析这段代码的内存安全性
-
-@sherlock 解释std::move和完美转发
+world.simulate(duration=10.0, dt=0.016)
 ```
 
-**与Sisyphus对话**:
-```
-@sisyphus 如何创建一个MLIR Dialect？
+### DSL (Phase 5+)
 
-@sisyphus 设计一个JIT编译器架构
-```
-
-**调用Code Reviewer审查代码**:
-```
-@code-reviewer 请审查这段刚体动力学代码
-[代码片段]
-
-@sherlock 实现这个功能后，请@code-reviewer审查代码质量。
-```
-
-## 关键特性
-
-### Plan/Subagent模式 (只读)
-Sherlock和Sisyphus是`plan`模式（主智能体），Code Reviewer是`subagent`模式（子智能体）：
-- ✅ 提供详细的代码审查报告
-- ✅ 生成完整的代码示例
-- ✅ 解释概念和原理
-- ✅ 查询Context7官方文档
-- ❌ 不直接编辑用户文件
-- ❌ 不运行shell命令
-
-### Context7集成
-
-**Sherlock可查询**:
-- `/cplusplus/standard` - C++标准库
-- `/boost/boost` - Boost库
-- `/google/googletest` - Google Test
-
-**Sisyphus可查询**:
-- `/llvm/llvm` - LLVM核心
-- `/llvm/mlir` - MLIR框架
-- `/llvm/clang` - Clang前端
-
-**Code Reviewer可查询**:
-- `/cplusplus/standard` - C++标准库
-- `/llvm/llvm` - LLVM核心
-- `/google/styleguide` - Google代码规范
-
-## 注意事项
-
-1. **重启生效**: 修改`opencode.json`后需完全退出OpenCode再重启
-2. **温度设置**: 两个智能体都使用`temperature: 0.2`，保证回答的确定性
-3. **模型选择**: 默认使用`claude-sonnet-4-20250514`，平衡性能和成本
-4. **安全限制**: plan模式确保不会意外修改代码，所有建议都以文本形式提供
-
-## 配置文件说明
-
-智能体配置文件使用Markdown格式，包含：
-- **YAML Frontmatter**: 元数据配置（mode, model, tools等）
-- **Markdown内容**: 系统提示词和详细说明
-
-这种格式比纯JSON更灵活，可以包含更详细的角色设定和示例。
-
-## 扩展
-
-要创建新的智能体，复制模板并修改：
-
-```bash
-cp .opencode/agents/sherlock.md .opencode/agents/my-agent.md
+```physics
+// kernels/euler.physics
+kernel void integrate(
+    float[] x, float[] y, float[] z,
+    float[] vx, float[] vy, float[] vz,
+    float[] mass, int n, float dt
+) {
+    int i = globalId();
+    if (i >= n) return;
+    
+    // Apply gravity
+    vy[i] = vy[i] + 9.8 * dt;
+    
+    // Update position
+    x[i] = x[i] + vx[i] * dt;
+    y[i] = y[i] + vy[i] * dt;
+    z[i] = z[i] + vz[i] * dt;
+}
 ```
 
-然后编辑`my-agent.md`中的内容，并在`opencode.json`中添加配置。
+## 依赖项
+
+- CMake ≥3.20
+- C++17兼容编译器
+- CUDA ≥11 (可选)
+- LLVM ≥15 (可选)
+- pybind11 ≥2.10 (可选)
+- Vulkan ≥1.3 (可选)
+
+## 贡献
+
+欢迎贡献！请阅读 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) 了解开发计划。
+
+## 许可
+
+MIT License
+
+## 致谢
+
+- 命名灵感：《列子·天瑞》
+- 架构参考：Taichi, MuJoCo, Drake

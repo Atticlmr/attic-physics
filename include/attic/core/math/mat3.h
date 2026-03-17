@@ -1,6 +1,7 @@
 #pragma once
 #include "attic/core/math/vec3.h"
 namespace attic {
+namespace math {
 
 struct Mat3 {
     float m[3][3];
@@ -61,4 +62,5 @@ struct Mat3 {
     }
 };
 
+} // namespace math
 } // namespace attic

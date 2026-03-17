@@ -1,8 +1,6 @@
 #pragma once
 #include "attic/physics/body.h"
 
-#include <functional>
-
 namespace attic {
 namespace physics {
 
