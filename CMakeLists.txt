@@ -1,71 +1,125 @@
 cmake_minimum_required(VERSION 3.20)
-project(flux_physics VERSION 0.1.0 LANGUAGES CXX)
+project(attic_physics VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 包含目录
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/src)
 
-# ===== 数学库（最基础）=====
-add_library(flux_math STATIC
-    src/math/vec3.cpp
-    src/math/quat.cpp
-    src/math/mat3.cpp
+# Options
+option(ATTIC_BUILD_GPU "Build GPU support (requires CUDA)" OFF)
+option(ATTIC_BUILD_COMPILER "Build DSL compiler (requires LLVM)" OFF)
+option(ATTIC_BUILD_RENDER "Build rendering support (requires Vulkan)" OFF)
+option(ATTIC_BUILD_PYTHON "Build Python bindings" OFF)
+option(ATTIC_BUILD_TESTS "Build tests" ON)
+option(ATTIC_BUILD_EXAMPLES "Build examples" ON)
+
+# Core library - always built
+set(ATTIC_CORE_SOURCES
+    lib/core/math/vec3.cpp
+    lib/core/math/mat3.cpp
+    lib/core/math/quat.cpp
 )
 
-# ===== 刚体动力学核心 =====
-add_library(flux_rigid_body STATIC
-    src/rigid_body/rigid_body.cpp
-    src/rigid_body/shape.cpp
-    src/rigid_body/inertia.cpp
+add_library(attic_core STATIC ${ATTIC_CORE_SOURCES})
+
+# Physics library - Phase 2
+set(ATTIC_PHYSICS_SOURCES
+    lib/physics/body.cpp
+    lib/physics/world.cpp
+    lib/physics/integrator.cpp
 )
-target_link_libraries(flux_rigid_body flux_math)
 
-# ===== 碰撞检测 =====
-add_library(flux_collision STATIC
-    src/collision/aabb.cpp
-    src/collision/broad_phase.cpp
-    src/collision/narrow_phase.cpp
-    src/collision/contact.cpp
-    src/collision/algorithms/sphere_sphere.cpp
-    src/collision/algorithms/box_box.cpp
-)
-target_link_libraries(flux_collision flux_math flux_rigid_body)
+add_library(attic_physics STATIC ${ATTIC_PHYSICS_SOURCES})
+target_link_libraries(attic_physics attic_core)
 
-# ===== 约束求解 =====
-add_library(flux_constraint STATIC
-    src/constraint/constraint.cpp
-    src/constraint/contact_constraint.cpp
-    src/constraint/joint.cpp
-    src/constraint/solvers/sequential_impulse.cpp
-)
-target_link_libraries(flux_constraint flux_math flux_rigid_body)
+# GPU Runtime - Phase 4 (optional)
+if(ATTIC_BUILD_GPU)
+    find_package(CUDA REQUIRED)
+    set(ATTIC_GPU_SOURCES
+        lib/gpu/memory.cpp
+        lib/gpu/device.cpp
+        lib/gpu/buffer.cpp
+    )
+    add_library(attic_gpu STATIC ${ATTIC_GPU_SOURCES})
+    target_link_libraries(attic_gpu attic_core ${CUDA_LIBRARIES})
+    target_include_directories(attic_gpu PRIVATE ${CUDA_INCLUDE_DIRS})
+endif()
 
-# ===== 物理世界 =====
-add_library(flux_physics STATIC
-    src/physics/world.cpp
-    src/physics/integrators/euler.cpp
-)
-target_link_libraries(flux_physics flux_rigid_body flux_collision flux_constraint)
+# DSL Compiler - Phase 5 (optional)
+if(ATTIC_BUILD_COMPILER)
+    find_package(LLVM REQUIRED CONFIG)
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    
+    set(ATTIC_COMPILER_SOURCES
+        lib/compiler/lexer/lexer.cpp
+        lib/compiler/parser/parser.cpp
+        lib/compiler/ast/ast.cpp
+        lib/compiler/codegen/codegen.cpp
+        lib/compiler/runtime/runtime.cpp
+    )
+    
+    add_library(attic_compiler STATIC ${ATTIC_COMPILER_SOURCES})
+    target_link_libraries(attic_compiler attic_core LLVM)
+    
+    # Compiler tool
+    add_executable(attic-compile tools/attic-compile.cpp)
+    target_link_libraries(attic-compile attic_compiler)
+endif()
 
-# ===== 测试 =====
-enable_testing()
+# Rendering - Phase 6 (optional)
+if(ATTIC_BUILD_RENDER)
+    find_package(Vulkan REQUIRED)
+    set(ATTIC_RENDER_SOURCES
+        lib/render/renderer.cpp
+        lib/render/scene.cpp
+    )
+    add_library(attic_render STATIC ${ATTIC_RENDER_SOURCES})
+    target_link_libraries(attic_render attic_core Vulkan::Vulkan)
+endif()
 
-# 数学测试
-add_executable(test_vec3 tests/rigid_body/test_free_fall.cpp)
-target_link_libraries(test_vec3 flux_math)
-add_test(NAME vec3 COMMAND test_vec3)
+# Python bindings - Phase 3
+if(ATTIC_BUILD_PYTHON)
+    find_package(pybind11 REQUIRED)
+    pybind11_add_module(attic_physics_py python/attic_physics.cpp)
+    target_link_libraries(attic_physics_py PRIVATE attic_physics)
+    if(ATTIC_BUILD_GPU)
+        target_link_libraries(attic_physics_py PRIVATE attic_gpu)
+    endif()
+endif()
 
-# 碰撞测试
-add_executable(test_collision tests/collision/test_sphere_collision.cpp)
-target_link_libraries(test_collision flux_collision)
-add_test(NAME collision COMMAND test_collision)
+# Tests
+if(ATTIC_BUILD_TESTS)
+    enable_testing()
+    
+    add_executable(test_core test/cpp/test_core.cpp)
+    target_link_libraries(test_core attic_core)
+    add_test(NAME core COMMAND test_core)
+    
+    add_executable(test_physics test/cpp/test_physics.cpp)
+    target_link_libraries(test_physics attic_physics)
+    add_test(NAME physics COMMAND test_physics)
+endif()
 
-# ===== 示例程序 =====
-add_executable(example_free_fall examples/rigid_body/01_free_fall.cpp)
-target_link_libraries(example_free_fall flux_physics)
+# Examples
+if(ATTIC_BUILD_EXAMPLES)
+    add_executable(example_bouncing_ball examples/bouncing_ball.cpp)
+    target_link_libraries(example_bouncing_ball attic_physics)
+endif()
 
-add_executable(example_stack examples/rigid_body/04_box_stack.cpp)
-target_link_libraries(example_stack flux_physics)
+# Install
+install(TARGETS attic_core attic_physics ARCHIVE DESTINATION lib)
+install(DIRECTORY include/ DESTINATION include)
+
+# Summary
+message(STATUS "")
+message(STATUS "attic-physics Configuration:")
+message(STATUS "  Version: ${PROJECT_VERSION}")
+message(STATUS "  GPU Support: ${ATTIC_BUILD_GPU}")
+message(STATUS "  Compiler: ${ATTIC_BUILD_COMPILER}")
+message(STATUS "  Rendering: ${ATTIC_BUILD_RENDER}")
+message(STATUS "  Python: ${ATTIC_BUILD_PYTHON}")
+message(STATUS "  Tests: ${ATTIC_BUILD_TESTS}")
+message(STATUS "  Examples: ${ATTIC_BUILD_EXAMPLES}")
+message(STATUS "")

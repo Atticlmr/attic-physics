@@ -43,3 +43,7 @@
 # macOS 
 *.DS_Store
 build/
+
+# vscode
+.vscode/
+.opencode/

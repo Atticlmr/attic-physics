@@ -1,2 +1,9 @@
-# player26680488
-Just for shit, maybe this world need more shit!
+# Attic Physics
+
+Attic 物理仿真引擎
+
+```bash
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+```

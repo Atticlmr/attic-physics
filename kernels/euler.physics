@@ -1,0 +1,38 @@
+// kernels/euler.physics
+// Simple explicit Euler integrator
+
+kernel void euler_integrate(
+    float[] pos_x, float[] pos_y, float[] pos_z,
+    float[] vel_x, float[] vel_y, float[] vel_z,
+    float[] force_x, float[] force_y, float[] force_z,
+    float[] mass_inv,
+    int[] is_static,
+    int n,
+    float dt,
+    float gravity_x,
+    float gravity_y,
+    float gravity_z
+) {
+    int i = globalId();
+    if (i >= n) return;
+    if (is_static[i]) return;
+    
+    // Compute acceleration: a = F/m + g
+    float ax = force_x[i] * mass_inv[i] + gravity_x;
+    float ay = force_y[i] * mass_inv[i] + gravity_y;
+    float az = force_z[i] * mass_inv[i] + gravity_z;
+    
+    // Semi-implicit Euler: v += a*dt, p += v*dt
+    vel_x[i] = vel_x[i] + ax * dt;
+    vel_y[i] = vel_y[i] + ay * dt;
+    vel_z[i] = vel_z[i] + az * dt;
+    
+    pos_x[i] = pos_x[i] + vel_x[i] * dt;
+    pos_y[i] = pos_y[i] + vel_y[i] * dt;
+    pos_z[i] = pos_z[i] + vel_z[i] * dt;
+    
+    // Clear forces for next step
+    force_x[i] = 0.0;
+    force_y[i] = 0.0;
+    force_z[i] = 0.0;
+}

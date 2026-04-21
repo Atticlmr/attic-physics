@@ -1,0 +1,21 @@
+// kernels/gravity.physics
+// Apply gravity force to all bodies
+
+kernel void apply_gravity(
+    float[] force_x, float[] force_y, float[] force_z,
+    float[] mass,
+    int[] is_static,
+    int n,
+    float gravity_x,
+    float gravity_y,
+    float gravity_z
+) {
+    int i = globalId();
+    if (i >= n) return;
+    if (is_static[i]) return;
+    
+    // F = m * g
+    force_x[i] = force_x[i] + mass[i] * gravity_x;
+    force_y[i] = force_y[i] + mass[i] * gravity_y;
+    force_z[i] = force_z[i] + mass[i] * gravity_z;
+}
